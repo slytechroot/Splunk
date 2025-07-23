@@ -1,0 +1,35 @@
+Splunk Configuration - create index
+ 
+How to create an index in Splunk:
+  1. Go to Manager > Indexes > New
+  2. Enter Index name
+ 
+Define the data input to be put into the new index:
+  1. Define sources by TCP or UDP port, must be unique to each index.
+  2. Go to Manager > Indexes > Data Inputs > TCP or UDP > New
+  3. Enter the port > select the source type > click “More setting” > define the Index for 
+        this source.
+ 
+To open the port in the RedHat firewall:
+  1. SSH to the server, 10.15.129.215.
+  2. Log in as root.
+  3. Run the “system-config-firewall” command.
+  4. Select “Customize”
+  5. Select “Forward” until you get to the “Other Ports” screen.
+  6. Select “Add”, enter the port number and “udp” in the “Protocol:” field, select “OK”
+  7. Select “Close”
+  8. Select “OK”
+  9. Select “Yes” to activate your changes. 
+ 
+To secure users based on role:
+  1. Go to Manager > Access Controls
+  2. Add a new role
+  3. In the “Indexes” section, select the indexes that this role is allowed to search.
+ 
+To create a new user and assign a specific role:
+  1. Go to Manager > Access Controls
+  2. Add a new user
+  3. Enter the username and password information
+  4. In the “Assign to roles” section, add the appropriate role for this user.
+ 
+

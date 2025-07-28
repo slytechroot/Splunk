@@ -1,0 +1,20 @@
+	- Index=main sourcetype=secure | eval result=if(like(_raw, %Failed password%"),"failed", "success")
+	- Index=main sourcetype=access_combined_wcookie | eval CATEGORY=case(status >=500, "Server Error", stauts >= 400, "Client Error", status == 200, "OK", 1==1, "N/A")
+	- The dot (.) operator concatenates strings and numbers.
+	- Index=main sourcetype=access_combined_wcookie | chart count by action, status
+	- Index=main sourcetype=secure "Failed password" | timechart count
+	
+On the left there notice Selected Fields and Interesting Fields. Selected Fields will always be chosen by Splunk. The rest of the Interesting Fields is where you want to make your selections. 
+
+	- Index=main sourcetype=secure "Failed password"
+(we added double quotes to make sure Failed Password is a continuous field. 
+
+Extracting IP addresses only with Rex:
+Index=main sourcetype=secure "Failed password" | rex "from (?<IP_ADDRESS>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
+
+Index=main sourcetype=secure "Failed password" | rex "from (?<IP_ADDRESS>[\S]+)" | search IP_ADDRESS = * | iplocation IP_ADDRESS | stats count by Country
+Index=main sourcetype=secure "Failed password" | rex "from (?<IP_ADDRESS>[\S]+)" | search IP_ADDRESS = * | iplocation IP_ADDRESS | geostats count by Region
+Index=main sourcetype=secure "Failed password" | rex "from (?<IP_ADDRESS>[\S]+)" | search IP_ADDRESS = * | iplocation IP_ADDRESS | timechart count by Country
+
+##################
+

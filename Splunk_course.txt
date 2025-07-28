@@ -17,4 +17,19 @@ Index=main sourcetype=secure "Failed password" | rex "from (?<IP_ADDRESS>[\S]+)"
 Index=main sourcetype=secure "Failed password" | rex "from (?<IP_ADDRESS>[\S]+)" | search IP_ADDRESS = * | iplocation IP_ADDRESS | timechart count by Country
 
 ##################
+Grouping events:
+
+	- Using the 'transaction' command
+	- | transaction <constraints>
+		○ Eg: | transaction JSESSIONID
+	- You will get a field of 'duration'
+	- Index=main sourcetype=secure | transaction JSESSIONID clientip
+
+#############
+
+Index=main sourcetype=access_combined_wcookie action=purchase | top 3 productID showperc=f | lookup prices.csv productID
+
+Index=_internal log_level='WARN' | stats count by component | outputlookup error_component.csv
+
+Index=main sourcetype=access_combined_wcookie status != 2* | stats count by status
 

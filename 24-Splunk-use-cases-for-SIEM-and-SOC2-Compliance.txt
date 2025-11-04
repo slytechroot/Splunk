@@ -1,0 +1,274 @@
+24 Use cases - SPLUNK SIEM - for SOC2 compliance <---------------------
+
+############
+Unauthorized Access attempts
+
+Detect brute-force or unauthorized access attempts (SOC2 CC6.1 - Logical Access)
+
+index=windows EventCode=4625 | stats count by Account_Name, Source_Network_Address
+
+Outcome:
+Identifies failed login attempts to accounts from various IP addresses. Helps detect potential brute-force attempts and prevent unauthorized access.
+
+########
+Privilege escalation
+
+Monitor attempts to gain unauthorized administrative privileges (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4672 | stats count by Account_Name
+
+Provides visibility into accounts assigned special privileges.
+Allows rapid detection of privilege escalation attempts.
+
+########
+Monitoring File Integrity
+
+Track file changes for sensitive files (SOC2 CC6.7 - System Operations).
+
+index=linux sourcetype=linux_secure | search "chmod" OR "chown"
+
+Monitors for any modifications to critical files or directories.
+Detects unauthorized or suspicious file permission changes.
+
+#############
+Excessive Failed Logins
+
+Detect potential account lockout scenarios (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4625 | stats count by Account_Name | where count > 5
+
+
+Identifies accounts with repeated failed login attempts that
+could lead to lockout. Helps detect potential password-
+guessing or brute-force attacks.
+
+########
+Firewall Policy Changes
+
+Identify unauthorized firewall changes (SOC2 CC6.7 - System Operations).
+
+index=paloalto sourcetype=pan_config | stats count by user
+
+Provides a list of users making firewall policy changes.
+Detects unauthorized or unexpected modifications to
+firewall configurations.
+
+##########
+Data Exfiltration Detection
+
+Detect large data transfers indicating possible data exfiltration (SOC2 CC6.7 - System Operations).
+
+index=network sourcetype=paloalto | stats sum(bytes) as total_bytes by dest_ip | where total_bytes > 10000000
+
+Identifies external IPs receiving unusually large amounts of data. Helps detect potential data exfiltration activities.
+
+##########
+Monitoring admin account usage
+
+Ensure admin accounts are used only when necessary (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4624 Account_Name="Administrator" | 
+stats count by Account_Name, Logon_Type
+
+Tracks usage of administrator accounts, monitoring login types. Detects unauthorized or inappropriate use of privileged accounts.
+
+#########
+Malware detection
+
+Detect malware infections across endpoints (SOC2 CC6.8 - Risk Mitigation).
+
+index=windows EventCode=1116 | stats count by VirusName, ComputerName
+
+Detects instances of malware across systems with relevant details. Enables quick identification of infected endpoints for remediation.
+
+##########
+Unauthorized Software Installation
+
+Track installation of unauthorized software (SOC2 CC6.7 - System Operations).
+
+index=windows EventCode=4688 CommandLine=*install*
+
+Identifies unauthorized software installation commands on systems. Helps prevent installation of unapproved or malicious software.
+
+######
+VPN access monitoring
+
+Monitor VPN access to detect unauthorized connections (SOC2 CC6.1 - Logical Access).
+
+index=paloalto sourcetype=pan_vpn | stats count by user
+
+Provides visibility into VPN connections by user. Detects unauthorized or unusual VPN logins to the network.
+
+###########
+Privileges user account activity
+
+Monitor actions by privileged accounts (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4728 OR EventCode=4732 | 
+stats count by Account_Name
+
+Tracks changes in user group membership by privileged
+accounts. Helps detect misuse or escalation of privileges.
+
+##############
+Monitoring user account activity
+
+Track user logon/logoff events (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4624 OR EventCode=4634 | stats count by Account_Name, Logon_Type
+
+Provides insight into user login and logout patterns. Helps
+detect unauthorized or suspicious login behavior.
+
+#########
+Suspicious DNS requests
+
+Identify DNS queries to malicious or suspicious domains (SOC2 CC6.8 - Risk Mitigation).
+
+index=dns sourcetype=dns_request | stats count
+by domain_name | where domain_name IN
+[malicious domains list]
+
+Detects requests to known malicious domains. Helps block
+further access to risky websites and mitigate threats.
+
+#################
+
+Failed Access to critical systems
+
+Detect failed login attempts to critical servers (SOC2 CC6.1 - Logical Access).
+
+index=linux sourcetype=linux_secure "authentication failure" | stats count by user
+
+Tracks failed login attempts on critical Linux servers. Enables quick response to potential unauthorized access attempts.
+
+#########
+USB Device Detection
+
+Monitor USB device activity (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4663 | search "USB" |
+stats count by Device_Name, Account_Name
+
+Detects and tracks the use of USB storage devices on systems. Helps identify potential data leakage through external devices.
+
+##########
+
+SUSPICIOUS PROCESSES
+Detect suspicious process executions (SOC2 CC6.7 - System Operations).
+
+index=linux sourcetype=linux_secure | search "process started"
+
+Monitors for unusual or unauthorized process startups on Linux systems. Enables detection of potential malware or rogue processes
+
+############
+
+CHANGES IN USER ROLES
+
+Monitor changes to user roles and permissions (SOC2 CC6.1 - Logical Access).
+
+index=windows EventCode=4728 OR EventCode=4732 | stats count by Group_Name, Account_Name
+
+Tracks changes in user groups and roles across Windows environments. Helps identify unauthorized privilege changes or misuse.
+
+##########
+
+INACTIVE USER ACCOUNTS
+
+Detect and disable inactive user accounts (SOC2 CC6.1 - Logical Access)
+
+index=windows EventCode=4624 | stats count by Account_Name | where count < 1
+
+Identifies inactive accounts that haven't been used for a specific time period. Helps reduce attack surface by deactivating dormant accounts.
+
+#########
+SECURITY POLICY MODIFICATIONS
+
+Detect changes to security policies (SOC2 CC6.7 - System Operations)
+
+index=windows EventCode=4907 | stats count by Group_Name
+
+Detects changes to security policies across systems. Ensures that any unauthorized changes are quickly identified and investigated.
+
+#########
+TRACKING SERVICE ACCOUNT USAGE
+
+Monitor the use of service accounts (SOC2 CC6.1 - Logical Access)
+
+index=windows EventCode=4624 Logon_Type=5
+
+Tracks logins of service accounts across Windows environments. Helps prevent misuse of these critical accounts.
+
+##########
+SOFTWARE VULNERABILITY SCANNING
+
+Ensure regular vulnerability scanning of systems (SOC2 CC6.6 - Change Management)
+
+index=linux sourcetype=vulnerability_scan
+
+Provides a list of detected vulnerabilities from regular scans.
+Helps ensure timely patching of identified security risks.
+
+#########
+
+MONITORING ACCOUNT LOCKOUTS
+
+Detect when accounts are locked due to failed logins (SOC2 CC6.1 - Logical Access)
+
+index=windows EventCode=4740
+
+Identifies accounts that are being locked out due to excessive failed logins. Helps investigate potential brute-force attacks or misconfigured systems.
+
+########
+
+SECURITY PATCH INSTALLATION
+
+Monitor installation of security patches (SOC2 CC6.7 - System Operations).
+
+index=windows EventCode=19 | stats count by ComputerName
+
+Tracks systems where security patches have been installed. Ensures that all systems are up to date with the latest security patches.
+
+##########
+
+WEB SERVER LOG MONITORING
+
+Detect abnormal activity in web server logs (SOC2 CC6.7 - System Operations)
+
+index=web sourcetype=access_combined | stats
+count by status
+
+Monitors HTTP status codes to detect anomalies such as 404 or 500 errors. Helps identify potential web server misconfigurations or attacks.
+
+#########
+
+CONCLUSION
+
+Here’s the conclusion summarizing the 24 Splunk
+SIEM use cases for SOC 2 compliance:
+- Splunk SIEM streamlines SOC 2 compliance by automating security monitoring and detection.
+- It tracks unauthorized access, privilege escalations, and suspicious activities in real-time.
+- Monitoring file integrity, system changes, and patch management ensures compliance with operational controls.
+- Use cases focus on detecting data exfiltration, malware, and abnormal traffic patterns.
+- Automated tracking of inactive accounts and service account usage enhances access control.
+- Vulnerability scans and web server monitoring reduce system vulnerabilities and potential breaches.
+
+Additional Resources:
+What is SOC2?
+https://www.onelogin.com/learn/what-is-soc-2
+
+SOC 2 Compliance: The Complete Introduction
+https://www.auditboard.com/blog/soc-2-framework-guide-the-complete-introduction/
+
+
+SOC 1, 2, 3 Compliance: Understanding & Achieving SOC Compliance
+https://www.splunk.com/en_us/blog/learn/soc-compliance.html
+
+
+How to Achieve SOC 2 Compliance in the Cloud
+https://orca.security/resources/blog/how-to-achieve-soc-2-compliance-in-the-cloud/
+
+https://haxsecurity.com/subscription/
+
+
+

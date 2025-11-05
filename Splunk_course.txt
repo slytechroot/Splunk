@@ -33,3 +33,32 @@ Index=_internal log_level='WARN' | stats count by component | outputlookup error
 
 Index=main sourcetype=access_combined_wcookie status != 2* | stats count by status
 
+#Look for unusual patterns or anomalies in DNS activity
+#Example query to identify spikes
+index=_* OR index=* sourcetype=dns_sample | stats count by fqdn
+
+Identify key fields in DNS logs such as source IP, destination IP, domain name, query type, response code, etc.
+As mentioned below, | regex _raw="(?i)\b(dns|domain|query|response|port53)\b": 
+
+This regex searches for common DNS-related keywords in the raw event data.
+Example extraction command:
+index=_* OR index=* sourcetype=dns_sample | regex _raw="(?i)\b(dns|domain|query|response|port53)\b"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

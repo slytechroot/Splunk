@@ -44,6 +44,11 @@ This regex searches for common DNS-related keywords in the raw event data.
 Example extraction command:
 index=_* OR index=* sourcetype=dns_sample | regex _raw="(?i)\b(dns|domain|query|response|port53)\b"
 
+#Use the top command to count the occurrences of each query type
+index=* sourcetype=dns_sample | top fqdn, src_ip
+
+#Search for domains associated with known malicious activity or suspicious behavior.
+index=* sourcetype=dns_sample fqdn="maliciousdomain.com"
 
 
 

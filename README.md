@@ -38,3 +38,13 @@ search code 4625 for 'an account failed to log on'
 index=* (sprasobh or oporada or mgergel) and 4625 source="WinEventLog:ForwardedEvents"
 
 ########
+index="comp_*" (source_ip="10.139.52.11" OR source_hostname="tenable01") destination_domain="www.digicert.com"
+
+index="comp_*"
+(query="www.digicert.com")
+(src_ip="10.139.52.11")
+
+
+index=compc_* src_ip="10.139.52.11" ftnt_action=deny
+
+#################

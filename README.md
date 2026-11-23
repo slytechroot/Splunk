@@ -48,4 +48,37 @@ index="comp_*"
 
 index=compc_* src_ip="10.139.52.11" ftnt_action=deny
 
+1.	List all the Index names in your Splunk Instance
+| eventcount summarize=false index=index_* | dedup index | fields index
+
+2.	List all hosts that are logging to a particular index. In this example, we use company_cisco as the index.
+index=company_cisco| table host | dedup host
+
+3.	List all hosts that log to an index with eventcount per host. You can change the key word “host” to use “ip” too, based on your need.
+index=company_cisco | stats count by host
+
+4.	Sort by a field in the event ouput log
+index=company_cisco | sort host
+
+5.	Print the ouput event log in reverse order ( ascending order based on time )
+index=company_cisco | reverse
+
+6.	Print only the first 10 results from the eventlog
+index=company_cisco | head 10
+
+7.	Return only the last 10 results from the eventlog
+index=company_cisco | tail 10
+
+8.	 How to search a pattern on multiple splunk indexes in a single query ? Examples :
+index=company_fortinet OR index=company_checkpoint | stats count by host
+
+index=company_fortinet OR index=company_checkpoint | search error
+
+9.	How to search a pattern and sort by count. This query will sort the results based on the output field “count”.
+index=company_fortinet OR index=company_checkpoint | stats count by host | sort - count | head 15
+
+index=company_fortinet OR index=company_checkpoint | top limit=15 host
+
+
+
 #################
